@@ -2,10 +2,12 @@ from flask import Flask
 from flask import make_response
 from flask import render_template
 
+from flask_bootstrap import Bootstrap
 from flask_script import Manager
 
 app = Flask(__name__)
 manager = Manager(app)
+bootstrap = Bootstrap(app)
 
 '''
 @app.route('/')
