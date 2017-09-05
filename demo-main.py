@@ -15,15 +15,11 @@ def index():
     response = make_response('<h1>Document</h1>')
     response.set_cookie('answer', '42')
     return response
-
-
-@app.route('/user/<name>')
-def user(name):
-    str = 'Hello, %s!' % name
-    response = make_response(str)
-    response.set_cookie('answer', '42')
-    return response
 '''
+@app.errorhandler(404)
+def user_404(name):
+    return render_template('404.html'), 404
+
 @app.route('/')
 def index():
     return render_template('index.html')
