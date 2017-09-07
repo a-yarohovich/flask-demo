@@ -1,4 +1,5 @@
 { %extends "base.html"% }
+{% import "bootstrap/wtf.html" as wtf %}
 
 { %block title% } Main Page { %endblock% }
 
@@ -14,4 +15,5 @@
     <p> That was {{moment(current_time).fromNow(refresh=True)}} </p>
 </div>
 
+{{ wtf.quick_form(form) }}
 { %endblock% }
