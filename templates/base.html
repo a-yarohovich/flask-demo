@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 {% extends "bootstrap/base.html"%}
 
-{% block title %} Andrew's blog {%endblock%}
+
+{%block head%}
+{{ super() }}
+<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.png') }}"
+      type="image/x-png">
+<link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"
+      type="image/x-png">
+{%endblock%}
+
+{% block title %}Andrew's site base{%endblock%}
 
 {% block navbar %}
 <div class="navbar navbar-inverse" role="navigation">
@@ -31,4 +40,9 @@
         {% block page_content %}{%endblock%}
     </div>
 </div>
+{%endblock%}
+
+{%block scripts%}
+{{super()}}
+{{moment.include_moment()}}
 {%endblock%}
