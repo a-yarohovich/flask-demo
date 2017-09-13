@@ -1,17 +1,17 @@
-{ %extends "base.html"% }
+{% extends "base.html"%}
 
-{ %block title% } Main Page { %endblock% }
+{% block title %} Main page {%endblock%}
 
-{ %block page_content% }
+{%block page_content%}
 
-<div class="page-header">
-    <h1> Hello, { %if name% } {{name}} { %else% } Stranger { %endif% }! </h1>
-</div>
+    <div class="page-header">
+        <h1> Hello, {% if name %} {{name}} {% else %} Stranger {% endif %}! </h1>
+    </div>
 
-<div style="color:#0000FF">
-    <h1>Main page!</h1>
-    <p> The local date and time is {{moment(current_time).format('LLL')}} .</p>
-    <p> That was {{moment(current_time).fromNow(refresh=True)}} </p>
-</div>
+    <div style="color:#0000FF">
+        <h1>Main page!</h1>
+        <p> The local date and time is {{moment(current_time).format('LLL')}} .</p>
+        <p> That was {{moment(current_time).fromNow(refresh=True)}} </p>
+    </div>
 
-{ %endblock% }
+{%endblock%}

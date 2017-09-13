@@ -31,7 +31,7 @@ def user_404(name):
 
 @app.route('/')
 def index():
-    return render_template('index.html', current_time=datetime.utcnow())
+    return render_template('index.html', current_time=datetime.utcnow(), name='Andrew')
 
 
 @app.route('/submit', methods=('GET', 'POST'))
