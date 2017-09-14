@@ -1,3 +1,5 @@
+import os
+
 from datetime import datetime
 
 from flask import Flask
@@ -16,10 +18,18 @@ from wtforms import StringField
 from wtforms import SubmitField
 from wtforms.validators import *
 
+from flaskext.mysql import MySQL
+from flask import request
 
-
+mysql = MySQL()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard'
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = '00hnb98A'
+app.config['MYSQL_DATABASE_DB'] = 'demo'
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+mysql.init_app(app)
+
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
@@ -33,6 +43,16 @@ class MyForm(FlaskForm):
 @app.errorhandler(404)
 def user_404(name):
     return render_template('404.html'), 404
+
+@app.route("/auth")
+def authenticate():
+    username = request.args.get('UserName')
+    password = request.args.get('Password')
+    cursor = mysql.connect().cursor()
+    cursor.execute("SELECT * from User where Username='" + username + "' and Password='" + password + "'")
+    data = cursor.fetchone()
+    result = "Username or Password is wrong" if data is None else "Logged in successfully"
+    return render_template('auth.html', auth_result=result)
 
 
 @app.route('/', methods=('GET', 'POST'))
