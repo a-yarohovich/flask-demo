@@ -1,4 +1,7 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
+from configparser import ConfigParser
 
 from datetime import datetime
 
@@ -21,6 +24,7 @@ from wtforms.validators import *
 from flaskext.mysql import MySQL
 from flask import request
 
+
 mysql = MySQL()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard'
@@ -33,6 +37,36 @@ mysql.init_app(app)
 manager = Manager(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+
+class AppConfig:
+    def __init__(self, config_file, is_run_background):
+        self.config = ConfigParser()
+        self.config.read(config_file)
+        for section in self.config.sections():  # Printing config
+            self.log.info('{0}:{1}'.format(section, dict({item[0]: item[1] for item in self.config.items(section)})))
+
+class AppLogger:
+    def __init__(self, config):
+        self.config = config
+
+    def init_logger(self):
+        # create logger
+        log_formatter = logging.Formatter('%(levelname)s - %(name)s - %(asctime)s - %(message)s')
+        log = logging.getLogger('flask.demo.app')
+        log.setLevel(logging.INFO)
+        # Set up file handler for logger
+        log_file_handler = RotatingFileHandler(filename=__file__ + ".log",
+                                               maxBytes=self.config.getint("Logger", "max_bytes"),
+                                               backupCount=self.config.getint("Logger", "backup_count"))
+        log_file_handler.setFormatter(log_formatter)
+        log.addHandler(log_file_handler)
+        # Set up console handler for logger
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(log_formatter)
+        log.addHandler(console_handler)
+        if self.config.getboolean("Custom", "verbose"):
+            log.setLevel(logging.DEBUG)
+        return log, log_file_handler
 
 
 class MyForm(FlaskForm):
