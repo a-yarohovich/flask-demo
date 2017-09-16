@@ -17,6 +17,8 @@ class DelevopmentConfig(Config):
     MAIL_PORT = 1111
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_SUBJECT_PREFIX = 'subj'
+    MAIL_SENDER = 'a.ya'
     MYSQL_DATABASE_USER = 'root'
     MYSQL_DATABASE_PASSWORD = '00hnb98A'
     MYSQL_DATABASE_DB = 'demo'
