@@ -23,11 +23,6 @@ class User(UserMixin):
         self.password_hash = password_hash
 
 
-    def get_auth_token(self):
-        pass
-        # return make_secure_token(self.username, key='secret_key')
-
-
     @staticmethod
     def getUserById(user_id):
         query = "select * from demo.users where user_id='{0}'".format(user_id)
@@ -41,6 +36,12 @@ class User(UserMixin):
 
 
     @staticmethod
+    def getUserByName(username):
+        query = "select * from demo.users where username='{0}'".format(username)
+        return User.getUserByQuery(query)
+
+
+    @staticmethod
     def getUserByQuery(query):
         cursor = db.connect().cursor()
         cursor.execute(query)
@@ -48,6 +49,15 @@ class User(UserMixin):
         if data is None:
             return None
         return User(id=data[0], username=data[1], email=data[2], password_hash=data[3], role_id=data[4])
+
+    @staticmethod
+    def createNewUser(username, password, email, role_id=0):
+        cursor = db.connect().cursor()
+        password_hash = generate_password_hash(password=password)
+        query = "insert into demo.users(username, password, email, role_id) values('{0}', '{1}', '{2}', {3}); commit" \
+            .format(username, password_hash, email, str(role_id))
+        if cursor.execute(query=query):
+            return User.getUserByEmail(email)
 
 
     def verify_password(self, password):
@@ -62,14 +72,6 @@ class User(UserMixin):
             if data:
                 passwd_hash = data[0]
         return (check_password_hash(passwd_hash, password=password)) if (passwd_hash) else (False)
-
-
-    def create_user(self, password):
-        cursor = db.connect().cursor()
-        self.password_hash = generate_password_hash(password=password)
-        query = "insert into demo.users(username, password) values('{0}', '{1}'); commit" \
-            .format(self.username, self.password_hash)
-        cursor.execute(query=query)
 
 
     def __repr__(self):
