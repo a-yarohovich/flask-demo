@@ -2,7 +2,8 @@ from . import db
 from . import login_manager
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import current_app
 
 class Role():
     id = None
@@ -15,12 +16,13 @@ class Role():
 
 
 class User(UserMixin):
-    def __init__(self, id, username, email, password_hash, role_id):
+    def __init__(self, id, username, email, password_hash, role_id, confirmed):
         self.id = id
         self.username = username
         self.email = email
         self.role_id = role_id
         self.password_hash = password_hash
+        self.confirmed = confirmed
 
 
     @staticmethod
@@ -48,7 +50,12 @@ class User(UserMixin):
         data = cursor.fetchone()
         if data is None:
             return None
-        return User(id=data[0], username=data[1], email=data[2], password_hash=data[3], role_id=data[4])
+        return User(id=data[0],
+                    username=data[1],
+                    email=data[2],
+                    password_hash=data[3],
+                    role_id=data[4],
+                    confirmed=data[5])
 
     @staticmethod
     def createNewUser(username, password, email, role_id=0):
@@ -72,6 +79,30 @@ class User(UserMixin):
             if data:
                 passwd_hash = data[0]
         return (check_password_hash(passwd_hash, password=password)) if (passwd_hash) else (False)
+
+
+    def generate_confirmation_token(self, expiration=3600):
+        s = Serializer(current_app.config['SECRET_KEY'], expiration)
+        return s.dumps({'confirm': self.id})
+
+
+    def confirm(self, token):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except:
+            return False
+
+        if data.get('confirm') != self.id:
+            return False
+
+        cursor = db.connect().cursor()
+        query = "update demo.users set confirmed=1 where user_id={0}; commit".format(str(self.id))
+        if cursor.execute(query=query):
+            self.confirmed = True
+            return True
+
+        return False
 
 
     def __repr__(self):
