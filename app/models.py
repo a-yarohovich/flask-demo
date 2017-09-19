@@ -42,6 +42,10 @@ class User(UserMixin):
         query = "select * from demo.users where username='{0}'".format(username)
         return User.getUserByQuery(query)
 
+    @staticmethod
+    def getUserMock():
+        return User('1', 'mock', 'mock@mock.com', 'qwewqeqw', 0, 0)
+
 
     @staticmethod
     def getUserByQuery(query):

@@ -45,8 +45,7 @@ def register():
 
         token = user.generate_confirmation_token()
         #bad style - if email has not send you store an user without confirmation mail
-        send_email(user.email, 'Confirm Your Account',
-                           'auth/email/confirm', user=user, token=token)
+        send_email(user.email, 'Confirm Your Account','auth/email/confirm', user=user, token=token)
         flash('A confirmation email has been sent to you by email.')
         return redirect(url_for('auth.login'))
 

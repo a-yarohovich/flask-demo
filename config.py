@@ -13,17 +13,18 @@ class Config:
 
 class DelevopmentConfig(Config):
     DEBUG = True
-    MAIL_SERVER = ''
-    MAIL_PORT = 1111
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_SUBJECT_PREFIX = 'subj'
-    MAIL_SENDER = 'a.ya'
     MYSQL_DATABASE_USER = 'root'
     MYSQL_DATABASE_PASSWORD = '00hnb98A'
     MYSQL_DATABASE_DB = 'demo'
     MYSQL_DATABASE_HOST = 'localhost'
-
+    # email server
+    MAIL_SERVER = 'smtp.googlemail.com'
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_SENDER = 'demo.flask.app@gmail.com'
 
 class TestingConfig(Config):
     TESTING = True
