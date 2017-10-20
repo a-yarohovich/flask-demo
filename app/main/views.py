@@ -1,6 +1,5 @@
 from flask import render_template, session, redirect, url_for, current_app
 from .. import db
-from ..email import send_email
 from . import main
 from .forms import NameForm
 
@@ -20,7 +19,6 @@ def index():
         if db_user is None:
             user = username
             session['known'] = False
-            #send_email(current_app.config['ADMIN'], 'New User', 'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data

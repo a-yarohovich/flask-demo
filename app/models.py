@@ -1,14 +1,48 @@
 from . import db
 from . import login_manager
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
+from enum import IntEnum
 
-class Role():
-    id = None
-    name = 'role'
-    users = {}
+
+def cursorFetchOne(query):
+    cursor = db.connect().cursor()
+    cursor.execute(query)
+    return cursor.fetchone()
+
+
+class Permissions(IntEnum):
+    ADMINS = 0b10000000
+    MODERATORS = 0b00001000
+    CREATE_POSTS = 0b00000100
+    CREATE_COMMENTS = 0b00000010
+    FOLLOWING = 0b00000001
+    EMPTY = 0b00000000
+
+
+class Role:
+    def __init__(self, role_id, name, permission):
+        self.id = role_id
+        self.name = name
+        self.permission = permission
+
+
+    @staticmethod
+    def getRoleByName(role_name):
+        data = cursorFetchOne("SELECT * FROM demo.user_roles where name='{0}';".format(role_name))
+        if data is None:
+            return None
+        return Role(role_id=data[0], name=data[1], permission=data[3])
+
+
+    @staticmethod
+    def getDefaultRole():
+        data = cursorFetchOne("SELECT * FROM demo.user_roles where default_role=1;")
+        if data is None:
+            return None
+        return Role(role_id=data[0], name=data[1], permission=data[3])
 
 
     def __repr__(self):
@@ -16,50 +50,76 @@ class Role():
 
 
 class User(UserMixin):
-    def __init__(self, id, username, email, password_hash, role_id, confirmed):
-        self.id = id
-        self.username = username
-        self.email = email
-        self.role_id = role_id
-        self.password_hash = password_hash
-        self.confirmed = confirmed
+    # base query for give a member from db. Just add condition after where
+    base_query = "select users.*, user_roles.name, user_roles.permissions"\
+                   " from users left join user_roles ON users.role_id=user_roles.role_id where {0};"
+
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.get('user_id', None)
+        self.username = kwargs.get('username', None)
+        self.email = kwargs.get('email', None)
+        self.password_hash = kwargs.get('password_hash', None)
+        self.confirmed = kwargs.get('confirmed', None)
+        self.role = kwargs.get('role', None)
+        self.location = kwargs.get('location', None)
+        self.about = kwargs.get('about', None)
+        self.member_since = kwargs.get('member_since', None)
+        self.last_seen = kwargs.get('last_seen', None)
+        if self.role is None:
+            if self.email == current_app.config['ADMIN']:
+                self.role = Role.getRoleByName('admin')
+            if self.role is None:
+                self.role = Role.getDefaultRole()
+
+
+    @property
+    def getRole(self):
+        return self.role  #class Role
 
 
     @staticmethod
     def getUserById(user_id):
-        query = "select * from demo.users where user_id='{0}'".format(user_id)
-        return User.getUserByQuery(query)
+        return User.getUserByQuery(User.base_query.format("user_id='{0}'".format(user_id)))
 
 
     @staticmethod
     def getUserByEmail(email):
-        query = "select * from demo.users where email='{0}'".format(email)
-        return User.getUserByQuery(query)
+        return User.getUserByQuery(User.base_query.format("email='{}'".format(email)))
 
 
     @staticmethod
     def getUserByName(username):
-        query = "select * from demo.users where username='{0}'".format(username)
-        return User.getUserByQuery(query)
+        return User.getUserByQuery(User.base_query.format("username='{}'".format(username)))
+
 
     @staticmethod
-    def getUserMock():
-        return User('1', 'mock', 'mock@mock.com', 'qwewqeqw', 0, 0)
+    def getAllUsersName():
+        cursor = db.connect().cursor()
+        cursor.execute('select username from demo.users')
+        return cursor.fetchall()
 
 
     @staticmethod
     def getUserByQuery(query):
+        print(query)
         cursor = db.connect().cursor()
         cursor.execute(query)
         data = cursor.fetchone()
         if data is None:
             return None
-        return User(id=data[0],
+        return User(user_id=data[0],
                     username=data[1],
                     email=data[2],
                     password_hash=data[3],
-                    role_id=data[4],
-                    confirmed=data[5])
+                    role=Role(role_id=data[4], name=data[6], permission=data[7]),
+                    confirmed=data[5],
+                    location=data[8],
+                    about=data[9],
+                    member_since=data[10],
+                    last_seen=data[11]
+                    )
+
 
     @staticmethod
     def createNewUser(username, password, email, role_id=0):
@@ -82,7 +142,7 @@ class User(UserMixin):
             data = cursor.fetchone()
             if data:
                 passwd_hash = data[0]
-        return (check_password_hash(passwd_hash, password=password)) if (passwd_hash) else (False)
+        return check_password_hash(passwd_hash, password=password) if passwd_hash else False
 
 
     def generate_confirmation_token(self, expiration=3600):
@@ -109,8 +169,29 @@ class User(UserMixin):
         return False
 
 
+    def can(self, permissions):
+        return self.role is not None and \
+            (self.role.permission & permissions) == permissions
+
+
+    def is_administrator(self):
+        return self.can(Permissions.ADMINS)
+
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, permissions):
+        return False
+
+
+    def is_administrator(self):
+        return False
+
+
+login_manager.anonymous_user = AnonymousUser
 
 
 @login_manager.user_loader
