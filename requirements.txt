@@ -18,3 +18,5 @@ click==6.7
 itsdangerous==0.24
 python-editor==1.0.3
 flask-mysql==1.4.0
+lxml==4.1.0
+

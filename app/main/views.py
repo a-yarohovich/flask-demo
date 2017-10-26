@@ -1,28 +1,129 @@
-from flask import render_template, session, redirect, url_for, current_app
-from .. import db
+from flask import render_template, session, redirect, url_for
+from ..models import User
 from . import main
-from .forms import NameForm
+from .forms import FsProfileForm
+from lxml.builder import E
+from lxml import etree
+import hashlib
 
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    form = NameForm()
-    if form.validate_on_submit():
-        username = form.name.data
-        cursor = db.connect().cursor()
-        cursor.execute("select * from users where username='" + username + "'")
-        data = cursor.fetchone()
-        db_user = None
-        if data is not None:
-            db_user = data[1]
+    form = FsProfileForm()
 
-        if db_user is None:
-            user = username
-            session['known'] = False
-        else:
-            session['known'] = True
-        session['name'] = form.name.data
-        return redirect(url_for('.index'))
+    if form.validate_on_submit():
+        sip_user_id = form.sip_user_id.data
+        sip_password = form.sip_password.data
+        sip_display_name = form.sip_display_name.data
+        voice_main_passwd = form.vm_password.data
+        outbound_caller_name = form.outbound_caller_name.data
+        outbound_caller_number = form.outbound_caller_number.data
+        print(session['user_id'])
+        User.createUserFsProfile(session['user_id'],
+                                        sip_user_id,
+                                        sip_password,
+                                        sip_display_name,
+                                        voice_main_passwd,
+                                        outbound_caller_name,
+                                        outbound_caller_number)
+        return render_template('index_thank.html')
     return render_template('index.html',
                            form=form, name=session.get('name'),
                            known=session.get('known', False))
+
+
+def create_base_directory_xml_doc():
+    doc = (
+        E.document(
+            E.section(name="directory")
+        ,type="freeswitch/xml")
+    )
+    return doc
+
+
+def hash_password(domain, username, password):
+     hash = hashlib.md5()
+     hash.update(username + ":" + domain + ":" + password)
+     password_hash = hash.hexdigest()
+     password_param = "a1-hash"
+     return password_param, password_hash
+
+
+def add_directory_domain_user(doc, domain, username, password):
+    password_param = "password"
+    # comment out the line below to test with plain text passwords
+    #password_param, password = hash_password(domain, username, password)
+
+    section = doc.find("section")
+
+    # search for a domain tag for the indicated domain
+    # if the domain is not found, add it
+    searchStr = 'domain[@name="{}"]'.format(domain)
+    results = section.xpath(searchStr)
+    if len(results) > 0:
+        dom = results[0]
+    else:
+        dom = (
+            E.domain(
+                E.params(
+                    E.param(
+                        name="dial-string",
+                        value='{presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}'
+                    )
+                ),
+                E.groups(
+                )
+            ,name=domain)
+        )
+        section.append(dom)
+
+    # search for a group tag (for the "default" context)
+    # if the group is not found, add it
+    groups = dom.find("groups")
+    searchStr = 'group[@name="{}"]'.format("default")
+    results = groups.xpath(searchStr)
+    if len(results) > 0:
+       grp = results[0]
+    else:
+       grp = E.group(
+           E.users()
+       ,name="default")
+       groups.append(grp)
+
+    # add the new user
+    grp.find("users").append(
+       E.user(
+           E.params(
+               E.param(name=password_param, value=password)
+           )
+       ,id=username)
+    )
+
+@main.route('/fs_api_directory', methods=['GET', 'POST'])
+def fs_directory():
+    document = create_base_directory_xml_doc()
+    add_directory_domain_user(document, "54.93.196.83", "1011", "pass")
+
+    return etree.tostring(document)
+
+
+
+"""    query = "SELECT fs_user_id, password, displayname, vmpasswd, accountcode, outbound_caller_id_name, " \
+            "outbound_caller_id_number from extensions where fs_user_id = '" + POST['user'] + "'"
+    cursor = db.connect().cursor()
+    cursor.execute(query)
+    data = cursor.fetchone()
+    if data is None:
+        xml = 'foo'
+        return Response(xml, mimetype='text/xml')"""
+
+"""return User(user_id=data[0],
+                username=data[1],
+                email=data[2],
+                password_hash=data[3],
+                role=Role(role_id=data[4], name=data[6], permission=data[7]),
+                confirmed=data[5],
+                location=data[8],
+                about=data[9],
+                member_since=data[10],
+                last_seen=data[11] )"""

@@ -56,7 +56,7 @@ class User(UserMixin):
 
 
     def __init__(self, **kwargs):
-        self.id = kwargs.get('user_id', None)
+        self.user_id = kwargs.get('user_id', None)
         self.username = kwargs.get('username', None)
         self.email = kwargs.get('email', None)
         self.password_hash = kwargs.get('password_hash', None)
@@ -66,6 +66,7 @@ class User(UserMixin):
         self.about = kwargs.get('about', None)
         self.member_since = kwargs.get('member_since', None)
         self.last_seen = kwargs.get('last_seen', None)
+        self.fs_profiles = []
         if self.role is None:
             if self.email == current_app.config['ADMIN']:
                 self.role = Role.getRoleByName('admin')
@@ -77,6 +78,8 @@ class User(UserMixin):
     def getRole(self):
         return self.role  #class Role
 
+    def get_id(self):
+        return self.user_id
 
     @staticmethod
     def getUserById(user_id):
@@ -99,6 +102,11 @@ class User(UserMixin):
         cursor.execute('select username from demo.users')
         return cursor.fetchall()
 
+    @staticmethod
+    def getAllUsers():
+        cursor = db.connect().cursor()
+        cursor.execute('select * from demo.users')
+        return cursor.fetchall()
 
     @staticmethod
     def getUserByQuery(query):
@@ -117,8 +125,7 @@ class User(UserMixin):
                     location=data[8],
                     about=data[9],
                     member_since=data[10],
-                    last_seen=data[11]
-                    )
+                    last_seen=data[11])
 
 
     @staticmethod
@@ -128,7 +135,44 @@ class User(UserMixin):
         query = "insert into demo.users(username, password, email, role_id) values('{0}', '{1}', '{2}', {3}); commit" \
             .format(username, password_hash, email, str(role_id))
         if cursor.execute(query=query):
-            return User.getUserByEmail(email)
+            last_row_id = cursor.lastrowid
+            print("ID for newly created user: ", last_row_id)
+            # maybe bad design:=)
+            return User.getUserById(last_row_id)
+
+
+    @staticmethod
+    def createUserFsProfile(user_id, sip_user_id, sip_passwd, sip_displ_name, vm_passwd, out_caller_name, out_caller_number):
+        cursor = db.connect().cursor()
+        query = "insert into demo.fs_profiles(user_id, " \
+                "sip_user_id, " \
+                "sip_password, " \
+                "sip_displayname, " \
+                "vmpasswd, " \
+                "accountcode, " \
+                "outbound_caller_id_name, " \
+                "outbound_caller_id_number) " \
+                "values ('{0}', '{1}', '{2}', '{3}', '{4}', '{0}', '{5}', '{6}');" \
+                "commit".format(user_id,
+                                sip_user_id,
+                                sip_passwd,
+                                sip_displ_name,
+                                vm_passwd,
+                                out_caller_name,
+                                out_caller_number)
+        print(query)
+        cursor.execute(query=query)
+
+
+    def createFsProfile(self, sip_user_id, passwd, displ_name, vm_passwd, out_caller_name, out_caller_number):
+        fs_profile = dict(sip_user_id=sip_user_id,
+                          passwd=passwd,
+                          displ_name=displ_name,
+                          vm_passwd=vm_passwd,
+                          out_caller_name=out_caller_name,
+                          out_caller_number=out_caller_number)
+        self.fs_profiles.append(fs_profile)
+
 
 
     def verify_password(self, password):

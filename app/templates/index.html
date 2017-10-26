@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Andrew's{% endblock %}
+{% block title %}MyCallback{% endblock %}
 
 {% block page_content %}
 <div class="page-header">
@@ -8,7 +9,25 @@
         {% if current_user.is_authenticated %}
             {{ current_user.username }}
         {% else %}
-            Stranger
-        {% endif %}!</h1>
+            Stranger.
+        {% endif %}</h1>
 </div>
+
+{% if current_user.is_authenticated %}
+<div>
+    <p><strong>You might to register sip account below</strong></p>
+</div>
+<hr>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-4">
+        {% if current_user.is_authenticated %}
+            {{wtf.quick_form(form)}}
+        {% else %}
+            You need to register for using operators tab.
+        {% endif %}</h1>
+    </div>
+</div>
+
 {% endblock %}

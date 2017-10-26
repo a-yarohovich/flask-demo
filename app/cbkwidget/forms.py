@@ -5,7 +5,7 @@ from .. models import User
 
 class CbkWidgetForm(FlaskForm):
     my_choices = [('1', 'VEHICLES'), ('2', 'Cars'), ('3', 'Bicycles')]
-    name = StringField('Name', [validators.DataRequired(message='Name is required')])
+    name = StringField('Namesdsdssd', [validators.DataRequired(message='Name is required')])
     title = StringField('title', [validators.DataRequired(message='Subject is required')])
     text = TextAreaField('Text', [validators.DataRequired(message='Text is required')])
     phonenumber = StringField('Phone number')
