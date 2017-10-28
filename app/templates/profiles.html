@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}MyCallback{% endblock %}
+
+{% block page_content %}
+
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #BFBFBF;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+</style>
+
+<table>
+  <tr>
+    <th>Sip user id</th>
+    <th>Display name</th>
+    <th>Outbound caller name</th>
+    <th>Outbound caller number</th>
+    <th>Default profile</th>
+  </tr>
+{% for profile in profiles %}
+  <tr>
+    <td>{{ profile[0] }}</td>
+    <td>{{ profile[1] }}</td>
+    <td>{{ profile[2] }}</td>
+    <td>{{ profile[3] }}</td>
+    <td>{{ profile[4] }}</td>
+  </tr>
+{% endfor %}
+
+</table>
+
+{% endblock %}

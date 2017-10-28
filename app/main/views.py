@@ -1,16 +1,22 @@
 from flask import render_template, session, redirect, url_for
 from ..models import User
 from . import main
-from .forms import FsProfileForm
+from . forms import FsProfileForm
 from lxml.builder import E
 from lxml import etree
 import hashlib
-
+from . profile_habdler import *
+from flask import current_app
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
-    form = FsProfileForm()
+    profiles = profileFiller()
+    return render_template('profiles.html', profiles=profiles)
 
+
+@main.route('/new_profile', methods=['GET', 'POST'])
+def new_profile():
+    form = FsProfileForm()
     if form.validate_on_submit():
         sip_user_id = form.sip_user_id.data
         sip_password = form.sip_password.data
@@ -18,16 +24,19 @@ def index():
         voice_main_passwd = form.vm_password.data
         outbound_caller_name = form.outbound_caller_name.data
         outbound_caller_number = form.outbound_caller_number.data
-        print(session['user_id'])
-        User.createUserFsProfile(session['user_id'],
-                                        sip_user_id,
-                                        sip_password,
-                                        sip_display_name,
-                                        voice_main_passwd,
-                                        outbound_caller_name,
-                                        outbound_caller_number)
-        return render_template('index_thank.html')
-    return render_template('index.html',
+        is_default_profile = int(form.is_default_profile.data)
+        createFsProfile(user_id=session['user_id'],
+                        sip_user_id=sip_user_id,
+                        sip_passwd=sip_password,
+                        sip_displ_name=sip_display_name,
+                        vm_passwd=voice_main_passwd,
+                        out_caller_name=outbound_caller_name,
+                        out_caller_number=outbound_caller_number,
+                        is_default_profile=is_default_profile)
+        return redirect(url_for('main.index'))
+    if getUserProfileCount(session['user_id']) > current_app.config['MAX_PROFILE_ALLOWED']:
+        return render_template('max_allowed_reached.html', limit_for="profiles")
+    return render_template('new_profile.html',
                            form=form, name=session.get('name'),
                            known=session.get('known', False))
 

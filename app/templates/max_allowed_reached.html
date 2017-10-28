@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}MyCallback{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    Sorry, you reached a limit for {{ limit_for }}
+</div>
+{% endblock %}

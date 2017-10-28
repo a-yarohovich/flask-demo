@@ -29,12 +29,8 @@ def create_app(config_name):
 
     from .main import main as main_blueprint
     from .auth import auth as auth_blueprint
-    from .extwidget import extwidget as extwidget_blueprint
-    from .cbkwidget import cbkwidget as cbkwidget_blueprint
 
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint, url_prexfix='/auth')
-    app.register_blueprint(extwidget_blueprint, url_prexfix='/ext')
-    app.register_blueprint(cbkwidget_blueprint, url_prexfix='/cbkwidget')
 
     return app

@@ -66,7 +66,6 @@ class User(UserMixin):
         self.about = kwargs.get('about', None)
         self.member_since = kwargs.get('member_since', None)
         self.last_seen = kwargs.get('last_seen', None)
-        self.fs_profiles = []
         if self.role is None:
             if self.email == current_app.config['ADMIN']:
                 self.role = Role.getRoleByName('admin')
@@ -139,39 +138,6 @@ class User(UserMixin):
             print("ID for newly created user: ", last_row_id)
             # maybe bad design:=)
             return User.getUserById(last_row_id)
-
-
-    @staticmethod
-    def createUserFsProfile(user_id, sip_user_id, sip_passwd, sip_displ_name, vm_passwd, out_caller_name, out_caller_number):
-        cursor = db.connect().cursor()
-        query = "insert into demo.fs_profiles(user_id, " \
-                "sip_user_id, " \
-                "sip_password, " \
-                "sip_displayname, " \
-                "vmpasswd, " \
-                "accountcode, " \
-                "outbound_caller_id_name, " \
-                "outbound_caller_id_number) " \
-                "values ('{0}', '{1}', '{2}', '{3}', '{4}', '{0}', '{5}', '{6}');" \
-                "commit".format(user_id,
-                                sip_user_id,
-                                sip_passwd,
-                                sip_displ_name,
-                                vm_passwd,
-                                out_caller_name,
-                                out_caller_number)
-        print(query)
-        cursor.execute(query=query)
-
-
-    def createFsProfile(self, sip_user_id, passwd, displ_name, vm_passwd, out_caller_name, out_caller_number):
-        fs_profile = dict(sip_user_id=sip_user_id,
-                          passwd=passwd,
-                          displ_name=displ_name,
-                          vm_passwd=vm_passwd,
-                          out_caller_name=out_caller_name,
-                          out_caller_number=out_caller_number)
-        self.fs_profiles.append(fs_profile)
 
 
 

@@ -13,7 +13,8 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_SENDER = 'demo.flask.app@gmail.com'
-
+    #profiles
+    MAX_PROFILE_ALLOWED = 10
     @staticmethod
     def init_app(app):
         pass
